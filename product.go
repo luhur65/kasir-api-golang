@@ -19,7 +19,6 @@ var produk = []Product{
 	{ID: 2, Nama: "Nasi goreng", Harga: 20000, Stok: 2},
 }
 
-// ================= HANDLER =================
 
 func getProductByID(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")

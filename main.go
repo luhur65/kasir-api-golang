@@ -8,17 +8,44 @@ import (
 
 func main() {
 
+	// /categories/{id}
+	http.HandleFunc("/api/categories/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+			case "GET":
+				getCategoryByID(w, r)
+			case "PUT":
+				updateCategory(w, r)
+			case "DELETE":
+				deleteCategory(w, r)
+			default:
+				http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// /categories
+	http.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+			case "GET":
+				getCategories(w, r)
+			case "POST":
+				createCategory(w, r)
+			default:
+				http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+
 	// /api/produk/{id}
 	http.HandleFunc("/api/produk/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
-		case "GET":
-			getProductByID(w, r)
-		case "PUT":
-			updateProduct(w, r)
-		case "DELETE":
-			deleteProduct(w, r)
-		default:
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			case "GET":
+				getProductByID(w, r)
+			case "PUT":
+				updateProduct(w, r)
+			case "DELETE":
+				deleteProduct(w, r)
+			default:
+				http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
