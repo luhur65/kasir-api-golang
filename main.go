@@ -69,6 +69,14 @@ func main() {
 		})
 	})
 
+	// root
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]string{
+			"status":  "ok",
+			"message": "welcome",
+		})
+	})
+
 	fmt.Println("Server running di port 8080")
 	http.ListenAndServe(":8080", nil)
 }
