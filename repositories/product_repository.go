@@ -15,7 +15,17 @@ func NewProductRepository(db *sql.DB) *ProductRepository {
 }
 
 func (repo *ProductRepository) GetAll() ([]models.Product, error) {
-	query := "SELECT id, name, price, stock FROM products"
+	query := `SELECT
+				p.id,
+				p.name,
+				p.price,
+				p.stock,
+				c.id,
+				c.name,
+				c.description
+		FROM products p
+		LEFT JOIN categories c ON p.category_id = c.id
+		`
 	rows, err := repo.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -25,7 +35,15 @@ func (repo *ProductRepository) GetAll() ([]models.Product, error) {
 	products := make([]models.Product, 0)
 	for rows.Next() {
 		var p models.Product
-		err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
+		err := rows.Scan(
+			&p.ID,
+			&p.Name,
+			&p.Price,
+			&p.Stock,
+			&p.Category.ID,
+			&p.Category.Name,
+			&p.Category.Description,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -41,12 +59,35 @@ func (repo *ProductRepository) Create(product *models.Product) error {
 	return err
 }
 
-// GetByID - ambil produk by ID
 func (repo *ProductRepository) GetByID(id int) (*models.Product, error) {
-	query := "SELECT id, name, price, stock FROM products WHERE id = $1"
+	query := `
+		SELECT
+			p.id,
+			p.name,
+			p.price,
+			p.stock,
+			c.id,
+			c.name,
+			c.description
+		FROM products p
+		INNER JOIN categories c ON p.category_id = c.id
+		WHERE p.id = $1
+	`
+	row := repo.db.QueryRow(query, id)
 
 	var p models.Product
-	err := repo.db.QueryRow(query, id).Scan(&p.ID, &p.Name, &p.Price, &p.Stock)
+
+	err := row.Scan(
+		&p.ID,
+		&p.Name,
+		&p.Price,
+		&p.Stock,
+		&p.Category.ID,
+    &p.Category.Name,
+    &p.Category.Description,
+	)
+
+
 	if err == sql.ErrNoRows {
 		return nil, errors.New("produk tidak ditemukan")
 	}
@@ -56,6 +97,7 @@ func (repo *ProductRepository) GetByID(id int) (*models.Product, error) {
 
 	return &p, nil
 }
+
 
 func (repo *ProductRepository) Update(product *models.Product) error {
 	query := "UPDATE products SET name = $1, price = $2, stock = $3 WHERE id = $4"
@@ -70,7 +112,7 @@ func (repo *ProductRepository) Update(product *models.Product) error {
 	}
 
 	if rows == 0 {
-		return errors.New("produk tidak ditemukan")
+		return errors.New("produk gagal diupdate")
 	}
 
 	return nil
@@ -88,7 +130,7 @@ func (repo *ProductRepository) Delete(id int) error {
 	}
 
 	if rows == 0 {
-		return errors.New("produk tidak ditemukan")
+		return errors.New("produk gagal dihapus")
 	}
 
 	return err
