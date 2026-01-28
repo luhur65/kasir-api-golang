@@ -45,31 +45,15 @@ func main() {
 	productService := services.NewProductService(productRepo)
 	productHandler := handlers.NewProductHandler(productService)
 
+	categoryRepo := repositories.NewCategoryRepository(db)
+	categoryService := services.NewCategoryService(categoryRepo)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+
 	// /categories/{id}
-	http.HandleFunc("/api/categories/", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-			case "GET":
-				getCategoryByID(w, r)
-			case "PUT":
-				updateCategory(w, r)
-			case "DELETE":
-				deleteCategory(w, r)
-			default:
-				http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		}
-	})
+	http.HandleFunc("/api/categories/", categoryHandler.HandleCategoryByID)
 
 	// /categories
-	http.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-			case "GET":
-				getCategories(w, r)
-			case "POST":
-				createCategory(w, r)
-			default:
-				http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		}
-	})
+	http.HandleFunc("/api/categories", categoryHandler.HandleCategories)
 
 	// HandleProductByID - GET/PUT/DELETE /api/produk/{id}
 	http.HandleFunc("/api/produk/", productHandler.HandleProductByID)
