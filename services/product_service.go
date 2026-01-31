@@ -17,7 +17,7 @@ func (s *ProductService) GetAll() ([]models.Product, error) {
 	return s.repo.GetAll()
 }
 
-func (s *ProductService) Create(data *models.Product) error {
+func (s *ProductService) Create(data *models.ProductRequest) error {
 	return s.repo.Create(data)
 }
 
@@ -25,7 +25,7 @@ func (s *ProductService) GetByID(id int) (*models.Product, error) {
 	return s.repo.GetByID(id)
 }
 
-func (s *ProductService) Update(product *models.Product) error {
+func (s *ProductService) Update(product *models.ProductRequest) error {
 	return s.repo.Update(product)
 }
 

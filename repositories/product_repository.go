@@ -53,9 +53,9 @@ func (repo *ProductRepository) GetAll() ([]models.Product, error) {
 	return products, nil
 }
 
-func (repo *ProductRepository) Create(product *models.Product) error {
-	query := "INSERT INTO products (name, price, stock) VALUES ($1, $2, $3) RETURNING id"
-	err := repo.db.QueryRow(query, product.Name, product.Price, product.Stock).Scan(&product.ID)
+func (repo *ProductRepository) Create(product *models.ProductRequest) error {
+	query := "INSERT INTO products (name, price, stock, category_id) VALUES ($1, $2, $3, $4) RETURNING id"
+	err := repo.db.QueryRow(query, product.Name, product.Price, product.Stock, product.CategoryID).Scan(&product.ID)
 	return err
 }
 
@@ -99,9 +99,9 @@ func (repo *ProductRepository) GetByID(id int) (*models.Product, error) {
 }
 
 
-func (repo *ProductRepository) Update(product *models.Product) error {
-	query := "UPDATE products SET name = $1, price = $2, stock = $3 WHERE id = $4"
-	result, err := repo.db.Exec(query, product.Name, product.Price, product.Stock, product.ID)
+func (repo *ProductRepository) Update(product *models.ProductRequest) error {
+	query := "UPDATE products SET name = $1, price = $2, stock = $3, category_id = $4 WHERE id = $5"
+	result, err := repo.db.Exec(query, product.Name, product.Price, product.Stock, product.CategoryID, product.ID)
 	if err != nil {
 		return err
 	}
