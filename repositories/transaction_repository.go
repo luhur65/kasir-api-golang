@@ -46,6 +46,11 @@ func (repo *TransactionRepository) CreateTransaction(items []models.CheckoutItem
 			return nil, err
 		}
 
+		if stock < int64(item.Quantity) {
+			tx.Rollback()
+			return nil, errors.New("stok " + ProductName + " tidak mencukupi")
+		}
+
 		subtotal := price * int64(item.Quantity)
 		totalAmount += subtotal
 
