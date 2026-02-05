@@ -53,6 +53,14 @@ func main() {
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 
+	reportRepo := repositories.NewReportRepository(db)
+	reportService := services.NewReportService(reportRepo)
+	reportHandler := handlers.NewReportHandler(reportService)
+
+	// report /api/report/hari-ini
+	http.HandleFunc("/api/report/hari-ini", reportHandler.GetDailyReport)
+	http.HandleFunc("/api/report", reportHandler.GetReport)
+
 	// checkout endpoint
 	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
 
