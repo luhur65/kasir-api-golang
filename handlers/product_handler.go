@@ -3,6 +3,7 @@ package handlers
 import (
 	"api-kasir/models"
 	"api-kasir/services"
+	"api-kasir/dto"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -32,7 +33,7 @@ func (h *ProductHandler) HandleProducts(w http.ResponseWriter, r *http.Request) 
 func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	products, err := h.service.GetAll()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		dto.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -44,7 +45,7 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var product models.Product
+	var product models.ProductRequest
 	err := json.NewDecoder(r.Body).Decode(&product)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -57,9 +58,19 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	productData, err := h.service.GetByID(product.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	resp := dto.APIResponse{
+		Message: "Berhasil ditambahkan",
+		Data: productData,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(product); err != nil {
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -84,18 +95,18 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/produk/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid product ID", http.StatusBadRequest)
+		dto.WriteError(w, http.StatusBadRequest, "Invalid product ID")
 		return
 	}
 
 	product, err := h.service.GetByID(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		dto.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(product); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -110,23 +121,34 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var product models.Product
-	err = json.NewDecoder(r.Body).Decode(&product)
-	if err != nil {
+	var req models.ProductRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	req.ID = id
 
-	product.ID = id
-	err = h.service.Update(&product)
-	if err != nil {
+	// update data
+	if err := h.service.Update(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// ambil data lengkap untuk response
+	product, err := h.service.GetByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	resp := dto.APIResponse{
+		Message: "Berhasil diubah",
+		Data:    product,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(product); err != nil {
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
