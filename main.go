@@ -12,11 +12,13 @@ import (
 	"api-kasir/repositories"
 	"api-kasir/services"
 	"log"
+	"api-kasir/middlewares"
 )
 
 type Config struct {
 	Port string `mapstructure:"PORT"`
 	DBConn string `mapstructure:"DB_CONN"`
+	ApiKey string `mapstructure:"API_KEY"`
 }
 
 func main() {
@@ -32,6 +34,7 @@ func main() {
 	config := Config{
 		Port: viper.GetString("PORT"),
 		DBConn: viper.GetString("DB_CONN"),
+		ApiKey: viper.GetString("API_KEY"),
 	}
 
 	// Setup database
@@ -40,6 +43,10 @@ func main() {
 		log.Fatal("Failed to initialize database:", err)
 	}
 	defer db.Close()
+
+	apiKeyMiddleware := middlewares.ApiKey(config.ApiKey)
+	loggingMiddleware := middlewares.Logger
+	corsMiddleware := middlewares.CORS
 
 	productRepo := repositories.NewProductRepository(db)
 	productService := services.NewProductService(productRepo)
@@ -58,22 +65,22 @@ func main() {
 	reportHandler := handlers.NewReportHandler(reportService)
 
 	// report /api/report/hari-ini
-	http.HandleFunc("/api/report/hari-ini", reportHandler.GetDailyReport)
-	http.HandleFunc("/api/report", reportHandler.GetReport)
+	http.HandleFunc("/api/report/hari-ini", corsMiddleware(loggingMiddleware(apiKeyMiddleware(reportHandler.GetDailyReport))))
+	http.HandleFunc("/api/report", corsMiddleware(loggingMiddleware(apiKeyMiddleware(reportHandler.GetReport))))
 
 	// checkout endpoint
-	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
+	http.HandleFunc("/api/checkout", corsMiddleware(loggingMiddleware(apiKeyMiddleware(transactionHandler.HandleCheckout))))
 
 	// /categories/{id}
-	http.HandleFunc("/api/categories/", categoryHandler.HandleCategoryByID)
+	http.HandleFunc("/api/categories/", corsMiddleware(loggingMiddleware(apiKeyMiddleware(categoryHandler.HandleCategoryByID))))
 
 	// /categories
-	http.HandleFunc("/api/categories", categoryHandler.HandleCategories)
+	http.HandleFunc("/api/categories", corsMiddleware(loggingMiddleware(apiKeyMiddleware(categoryHandler.HandleCategories))))
 
 	// HandleProductByID - GET/PUT/DELETE /api/produk/{id}
-	http.HandleFunc("/api/produk/", productHandler.HandleProductByID)
+	http.HandleFunc("/api/produk/", corsMiddleware(loggingMiddleware(apiKeyMiddleware(productHandler.HandleProductByID))))
 	// /api/produk
-	http.HandleFunc("/api/produk", productHandler.HandleProducts)
+	http.HandleFunc("/api/produk", corsMiddleware(loggingMiddleware(apiKeyMiddleware(productHandler.HandleProducts))))
 
 	// health
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
